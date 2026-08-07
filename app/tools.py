@@ -1,80 +1,285 @@
-import json
-
-HOTEL_FILE = "data/hotel_profile.json"
+from firebase_admin import firestore
 
 
-def load_hotel():
-    with open(HOTEL_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+# Connect to Firebase Firestore
+db = firestore.client()
 
 
-def save_hotel(data):
-    with open(HOTEL_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+
+# =====================================
+# GET ALL ROOMS
+# =====================================
+
+def get_rooms():
+
+    rooms = []
+
+    docs = db.collection("rooms").stream()
+
+    for doc in docs:
+
+        room = doc.to_dict()
+
+        room["id"] = doc.id
+
+        rooms.append(room)
 
 
-def add_room(number, room_type, price):
-    hotel = load_hotel()
+    return rooms
 
-    hotel["rooms"].append(
-        {
-            "number": number,
-            "type": room_type,
-            "price": price,
-            "status": "available"
-        }
+
+
+
+# =====================================
+# ADD NEW ROOM
+# =====================================
+
+def add_room(room_number, room_type, price):
+
+    room_data = {
+
+        "roomNumber": str(room_number),
+
+        "type": room_type,
+
+        "price": int(price),
+
+        "status": "available",
+
+        "featured": False,
+
+        "amenities": [],
+
+        "images": [],
+
+        "description": "",
+
+        "discountPrice": None,
+
+    }
+
+
+    new_room = db.collection("rooms").document()
+
+
+    new_room.set(room_data)
+
+
+    return (
+        f"Room {room_number} added successfully. "
+        f"Type: {room_type}. Price: {price}"
     )
 
-    save_hotel(hotel)
-
-    return f"Room {number} added successfully."
 
 
-def remove_room(number):
-    hotel = load_hotel()
-
-    hotel["rooms"] = [
-        room
-        for room in hotel["rooms"]
-        if room["number"] != number
-    ]
-
-    save_hotel(hotel)
-
-    return f"Room {number} removed."
 
 
-def change_price(number, new_price):
-    hotel = load_hotel()
+# =====================================
+# REMOVE ROOM
+# =====================================
 
-    for room in hotel["rooms"]:
-        if room["number"] == number:
-            room["price"] = new_price
+def remove_room(room_number):
 
-    save_hotel(hotel)
-
-    return f"Room {number} updated."
-
-
-def check_in(number):
-    hotel = load_hotel()
-
-    for room in hotel["rooms"]:
-        if room["number"] == number:
-            room["status"] = "occupied"
-
-    save_hotel(hotel)
-
-    return f"Room {number} checked in."
+    rooms = db.collection("rooms").where(
+        "roomNumber",
+        "==",
+        str(room_number)
+    ).stream()
 
 
-def check_out(number):
-    hotel = load_hotel()
 
-    for room in hotel["rooms"]:
-        if room["number"] == number:
-            room["status"] = "available"
+    found = False
 
-    save_hotel(hotel)
 
-    return f"Room {number} checked out."
+    for room in rooms:
+
+        room.reference.delete()
+
+        found = True
+
+
+
+    if found:
+
+        return f"Room {room_number} removed successfully."
+
+
+
+    return f"Room {room_number} was not found."
+
+
+
+
+
+
+
+# =====================================
+# UPDATE ROOM PRICE
+# =====================================
+
+def change_price(room_number, new_price):
+
+    rooms = db.collection("rooms").where(
+        "roomNumber",
+        "==",
+        str(room_number)
+    ).stream()
+
+
+
+    for room in rooms:
+
+        room.reference.update(
+            {
+                "price": int(new_price)
+            }
+        )
+
+
+        return (
+            f"Room {room_number} price changed "
+            f"to {new_price}"
+        )
+
+
+
+    return f"Room {room_number} not found."
+
+
+
+
+
+
+
+# =====================================
+# CHECK IN GUEST
+# =====================================
+
+def check_in(room_number):
+
+    rooms = db.collection("rooms").where(
+        "roomNumber",
+        "==",
+        str(room_number)
+    ).stream()
+
+
+
+    for room in rooms:
+
+        room.reference.update(
+            {
+                "status": "occupied"
+            }
+        )
+
+
+        return (
+            f"Room {room_number} checked in."
+        )
+
+
+
+    return f"Room {room_number} not found."
+
+
+
+
+
+
+
+# =====================================
+# CHECK OUT GUEST
+# =====================================
+
+def check_out(room_number):
+
+    rooms = db.collection("rooms").where(
+        "roomNumber",
+        "==",
+        str(room_number)
+    ).stream()
+
+
+
+    for room in rooms:
+
+        room.reference.update(
+            {
+                "status": "available"
+            }
+        )
+
+
+        return (
+            f"Room {room_number} checked out."
+        )
+
+
+
+    return f"Room {room_number} not found."
+
+
+
+
+
+
+
+# =====================================
+# UPDATE ANY ROOM FIELD
+# =====================================
+
+def update_room(room_number, updates):
+
+    rooms = db.collection("rooms").where(
+        "roomNumber",
+        "==",
+        str(room_number)
+    ).stream()
+
+
+
+    for room in rooms:
+
+        room.reference.update(updates)
+
+
+        return (
+            f"Room {room_number} updated successfully."
+        )
+
+
+
+    return f"Room {room_number} not found."
+
+
+
+
+
+
+
+# =====================================
+# FIND ROOM
+# =====================================
+
+def find_room(room_number):
+
+    rooms = db.collection("rooms").where(
+        "roomNumber",
+        "==",
+        str(room_number)
+    ).stream()
+
+
+
+    for room in rooms:
+
+        data = room.to_dict()
+
+        data["id"] = room.id
+
+        return data
+
+
+
+    return None
