@@ -1,0 +1,156 @@
+{
+    "hotel_name": "Shangrila View Hotel",
+    "currency": "NGN",
+    "room_types": [
+        {
+            "name": "Standard",
+            "price": 18000
+        },
+        {
+            "name": "Deluxe",
+            "price": 22000
+        },
+        {
+            "name": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "name": "Suites",
+            "price": 30000
+        }
+    ],
+    "rooms": [
+        {
+            "number": 101,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 102,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 103,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 104,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 105,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 106,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 107,
+            "type": "Standard",
+            "price": 18000
+        },
+        {
+            "number": 201,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 202,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 203,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 204,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 205,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 206,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 207,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 208,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 301,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 302,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 303,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 304,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 305,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 306,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 307,
+            "type": "Deluxe",
+            "price": 22000
+        },
+        {
+            "number": 308,
+            "type": "Super Deluxe",
+            "price": 25000
+        },
+        {
+            "number": 309,
+            "type": "Suites",
+            "price": 30000
+        },
+        {
+            "number": 310,
+            "type": "Deluxe",
+            "price": 22000,
+            "status": "available"
+        },
+        {
+            "number": 450,
+            "type": "deluxe",
+            "price": 25000,
+            "status": "available"
+        }
+    ]
+}
