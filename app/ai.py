@@ -5,6 +5,7 @@ from app.tools import (
     change_price,
     check_in,
     check_out,
+    get_rooms,
 )
 
 import json
@@ -33,67 +34,50 @@ def ask_ai(message: str):
     if command:
 
         if command["action"] == "add_room":
-            return add_room(
-                command["number"],
-                command["room_type"],
-                command["price"]
-            )
-
+            return add_room(command["number"], command["room_type"], command["price"])
         elif command["action"] == "remove_room":
-            return remove_room(
-                command["number"]
-            )
-
+            return remove_room(command["number"])
         elif command["action"] == "change_price":
-            return change_price(
-                command["number"],
-                command["price"]
-            )
-
+            return change_price(command["number"], command["price"])
         elif command["action"] == "check_in":
-            return check_in(
-                command["number"]
-            )
-
+            return check_in(command["number"])
         elif command["action"] == "check_out":
-            return check_out(
-                command["number"]
-            )
+            return check_out(command["number"])
 
-    # Reload the local profile each request so local edits are picked up.
+    # Reload local structured data so edits are picked up without restarting code.
     with open("data/hotel_profile.json", "r", encoding="utf-8") as f:
         hotel_data = json.load(f)
 
-    # Pull the current public website content automatically. The bridge caches
-    # briefly and refreshes from the website repository when the cache expires,
-    # so website edits do not require manually retraining or re-teaching the AI.
+    # Automatically synchronize the current public website repository.
     website_knowledge = get_website_knowledge()
+
+    # Firestore is the live source of truth for room inventory when available.
+    try:
+        live_rooms = get_rooms()
+    except Exception:
+        live_rooms = []
 
     system_context = (
         SYSTEM_PROMPT
         + "\n\nHotel Information (local structured data):\n"
         + json.dumps(hotel_data, indent=2, ensure_ascii=False)
+        + "\n\nLive Room Inventory (Firestore):\n"
+        + json.dumps(live_rooms, indent=2, ensure_ascii=False)
         + "\n\nCurrent Public Website Knowledge (automatically synchronized from GitHub):\n"
         + website_knowledge
         + "\n\nKnowledge rules:\n"
         + "- Use current public website content for website facts, services, policies, contact information and page content.\n"
-        + "- Use live Firestore/tool results for operational facts such as current rooms and room status when available.\n"
+        + "- Use live Firestore/tool results for operational facts such as current rooms, prices and room status when available.\n"
         + "- Never invent prices, amenities, policies, availability, facilities, services or hotel claims.\n"
         + "- If the available sources do not contain an answer, say that you do not have confirmed information and direct the guest to contact the hotel.\n"
-        + "- Do not reveal private credentials, internal configuration, security rules, or administrative implementation details."
+        + "- Do not reveal private credentials, internal configuration, security rules, guest records, or administrative implementation details."
     )
 
     response = client.chat.completions.create(
         model="nvidia/nemotron-3-ultra-550b-a55b:free",
         messages=[
-            {
-                "role": "system",
-                "content": system_context
-            },
-            {
-                "role": "user",
-                "content": message
-            }
+            {"role": "system", "content": system_context},
+            {"role": "user", "content": message}
         ]
     )
 
