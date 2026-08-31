@@ -12,6 +12,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from app.prompts import SYSTEM_PROMPT
+from app.website_knowledge import get_website_knowledge
 
 load_dotenv()
 
@@ -26,7 +27,7 @@ client = OpenAI(
 
 def ask_ai(message: str):
 
-    # Detect hotel commands
+    # Detect hotel commands before normal conversation.
     command = detect_command(message)
 
     if command:
@@ -59,19 +60,35 @@ def ask_ai(message: str):
                 command["number"]
             )
 
-    # Reload hotel data each request
+    # Reload the local profile each request so local edits are picked up.
     with open("data/hotel_profile.json", "r", encoding="utf-8") as f:
         hotel_data = json.load(f)
 
-    # Normal AI conversation
+    # Pull the current public website content automatically. The bridge caches
+    # briefly and refreshes from the website repository when the cache expires,
+    # so website edits do not require manually retraining or re-teaching the AI.
+    website_knowledge = get_website_knowledge()
+
+    system_context = (
+        SYSTEM_PROMPT
+        + "\n\nHotel Information (local structured data):\n"
+        + json.dumps(hotel_data, indent=2, ensure_ascii=False)
+        + "\n\nCurrent Public Website Knowledge (automatically synchronized from GitHub):\n"
+        + website_knowledge
+        + "\n\nKnowledge rules:\n"
+        + "- Use current public website content for website facts, services, policies, contact information and page content.\n"
+        + "- Use live Firestore/tool results for operational facts such as current rooms and room status when available.\n"
+        + "- Never invent prices, amenities, policies, availability, facilities, services or hotel claims.\n"
+        + "- If the available sources do not contain an answer, say that you do not have confirmed information and direct the guest to contact the hotel.\n"
+        + "- Do not reveal private credentials, internal configuration, security rules, or administrative implementation details."
+    )
+
     response = client.chat.completions.create(
         model="nvidia/nemotron-3-ultra-550b-a55b:free",
         messages=[
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT
-                + "\n\nHotel Information:\n"
-                + json.dumps(hotel_data, indent=2)
+                "content": system_context
             },
             {
                 "role": "user",
