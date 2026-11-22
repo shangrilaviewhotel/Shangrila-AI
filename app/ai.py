@@ -20,19 +20,37 @@ load_dotenv()
 with open("data/hotel_profile.json", "r", encoding="utf-8") as f:
     hotel_data = json.load(f)
 
+# Keep the application provider-neutral. The default preserves the existing
+# OpenRouter setup; setting AI_PROVIDER=ollama switches to a local Ollama server.
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openrouter").strip().lower()
+
+if AI_PROVIDER == "ollama":
+    AI_BASE_URL = os.getenv("AI_BASE_URL", "http://localhost:11434/v1")
+    AI_API_KEY = os.getenv("AI_API_KEY", "ollama")
+    AI_MODEL = os.getenv("AI_MODEL", "qwen3:4b")
+elif AI_PROVIDER == "openrouter":
+    AI_BASE_URL = os.getenv("AI_BASE_URL", "https://openrouter.ai/api/v1")
+    AI_API_KEY = os.getenv("AI_API_KEY") or os.getenv("OPENROUTER_API_KEY", "")
+    AI_MODEL = os.getenv(
+        "AI_MODEL",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+    )
+else:
+    raise ValueError(
+        "Unsupported AI_PROVIDER. Choose 'openrouter' or 'ollama'."
+    )
+
 client = OpenAI(
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1",
+    api_key=AI_API_KEY,
+    base_url=AI_BASE_URL,
 )
 
 
 def ask_ai(message: str):
-
     # Detect hotel commands before normal conversation.
     command = detect_command(message)
 
     if command:
-
         if command["action"] == "add_room":
             return add_room(command["number"], command["room_type"], command["price"])
         elif command["action"] == "remove_room":
@@ -74,7 +92,7 @@ def ask_ai(message: str):
     )
 
     response = client.chat.completions.create(
-        model="nvidia/nemotron-3-ultra-550b-a55b:free",
+        model=AI_MODEL,
         messages=[
             {"role": "system", "content": system_context},
             {"role": "user", "content": message}
